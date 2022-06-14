@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Airports Globe</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
+        <script src="pinhole.js"></script>
+        <script src="globe.js"></script>
+        <script src="land-boundaries.js"></script>
+        <script src="airports.js"></script>
+        <script src="geo.js"></script>
+        <script src="qtree.js" charset="utf8"></script>
+        <style>
+             html, body {
+                margin:0; padding:0; width: 100%; height: 100%;
+                overflow: hidden;
+                background: black;
+            }
+            #link {
+                color: white;
+                position: absolute;
+                bottom: 0px;
+                right: 0px;
+                margin: 20px;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                color: rgba(0,128,96,0.9);
+                color: rgba(0,255,64,0.5);
+            }
+        </style>
+    </head>
+	<body>
+        <a href="https://github.com/tidwall/airports" id="link">github.com/tidwall/airports</a>
+        <canvas style="width:100%;height:100%;" id="globe"></canvas>
+    </body>
+    <script>
+        const MAX_ITEMS = 10;
+        var tr = new QTree(-180, -90, 180, 90);
+        for (var i=0;i<airports.length;i++) {
+            var code = airports[i][0];
+            tr.insert(airports[i][2], airports[i][1], code);
+        }
+        function nearby(lat, lng) {
+            var items = [];
+            tr.nearby(lng, lat, function(dist, item) {
+                items.push(item);
+                return items.length < MAX_ITEMS;
+            });
+            return items;
+        }
+        var globe = document.getElementById("globe");
+        /** @type {HTMLCanvasElement} */
+        var ctx = globe.getContext("2d");
+        var offsetX = 0, offsetY = 0;
+        var rotX = 0;
+        var rotY = 0;
+        var upRotX = Math.PI/2;
+        var upRotY = 0;
+        var glat = 33;
+        var glng = -112;
+        var lat;
+        var lng;
+        var maxLat = 80;
+        var minLat = -80
+        function step() {
+            var width = globe.offsetWidth*window.devicePixelRatio;
+            var height = globe.offsetHeight*window.devicePixelRatio;
+            var size = Math.min(width, height);
+            globe.width = width;
+            globe.height = height;
+            lng = glng-offsetX*0.1;
+            lat = glat+offsetY*0.1;
+            if (lat > maxLat) {
+                lat = maxLat;
+            } else if (lat < minLat) {
+                lat = minLat
+            }
+            var items = nearby(lat, lng);
+
+            var g = new Globe()
+            g.p.begin();
+            g.drawGraticule(10.0);
+            g.p.colorize("rgba(0,128,96,0.3)");
+            g.p.end();
+            g.p.begin();
+            g.drawPreparedPaths(landBoundaries);
+            g.p.colorize("rgba(0,255,64,0.7)");
+            g.p.end();
+            g.p.begin();
+            g.drawDot(lat, lng, 0.02);
+            for (var i=0;i<items.length;i++){
+                g.drawLine(lat,lng,items[i].y,items[i].x);
+            }
+            g.p.colorize("rgba(200,0,64,0.8)");
+            g.p.end();
+            // g.p.begin();
+            // g.drawLine(33, -112, 55, 112);
+            // g.p.colorize("rgba(200,0,64,0.8)");
+            // g.p.end();
+            g.centerOn(lat, lng);
+            g.render(globe, {bgColor:"black"});
+        }
+        window.addEventListener("resize", step);
+        step();
+        var down = false;
+        var seedX = 0;
+        var seedY = 0;
+        window.addEventListener('mousedown', function(e) {
+            down = true;
+            seedX = e.clientX;
+            seedY = e.clientY;
+        });
+        window.addEventListener('mouseup', function() {
+            down = false;
+            glat = lat;
+            glng = lng;
+            upRotX = rotX;
+            upRotY = rotY;
+
+        });
+        window.addEventListener('mousemove', function(e) {
+            if (down) {
+                offsetX = e.clientX-seedX;
+                offsetY = e.clientY-seedY;
+                step();
+            };
+        });
+
+    
+    </script>
+</html>
