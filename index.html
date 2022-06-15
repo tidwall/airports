@@ -33,7 +33,7 @@
         <canvas style="width:100%;height:100%;" id="globe"></canvas>
     </body>
     <script>
-        const AUTO_MOVE = false;
+        
         const MAX_ITEMS = 10;
         var tr = new QTree(-180, -90, 180, 90);
         for (var i=0;i<airports.length;i++) {
@@ -62,14 +62,15 @@
         var lng;
         var maxLat = 80;
         var minLat = -80
+        var touchMul = 0.1;
         function step() {
             var width = globe.offsetWidth*window.devicePixelRatio;
             var height = globe.offsetHeight*window.devicePixelRatio;
             var size = Math.min(width, height);
             globe.width = width;
             globe.height = height;
-            lng = glng-offsetX*0.1;
-            lat = glat+offsetY*0.1;
+            lng = glng-offsetX*touchMul;
+            lat = glat+offsetY*touchMul;
             if (lat > maxLat) {
                 lat = maxLat;
             } else if (lat < minLat) {
@@ -93,45 +94,53 @@
             }
             g.p.colorize("rgba(200,0,64,0.8)");
             g.p.end();
+            // g.p.begin();
+            // g.drawLine(33, -112, 55, 112);
+            // g.p.colorize("rgba(200,0,64,0.8)");
+            // g.p.end();
             g.centerOn(lat, lng);
             g.render(globe, {bgColor:"black"});
-            if (AUTO_MOVE) {
-                glat = 50;
-                glng += 0.2
-                if (glng > 180) {
-                    glng -= 360;
-                }
-                window.requestAnimationFrame(step);
-            }
-
         }
         window.addEventListener("resize", step);
         step();
         var down = false;
         var seedX = 0;
         var seedY = 0;
-        window.addEventListener('mousedown', function(e) {
+        function clientX(e) {
+            return e.clientX ?? e.touches[0].clientX;
+        }
+        function clientY(e) {
+            return e.clientY ?? e.touches[0].clientY;
+        }
+        function touchstart(e) {
             down = true;
-            seedX = e.clientX;
-            seedY = e.clientY;
-        });
-        window.addEventListener('mouseup', function() {
+            touchMul = e.touches?0.2:0.1;
+            seedX = clientX(e);
+            seedY = clientY(e);
+            console.log(seedX, seedY);
+            e.preventDefault()
+        }
+        function touchmove(e) {
+            if (down) {
+                offsetX = clientX(e)-seedX;
+                offsetY = clientY(e)-seedY;
+                step();
+            };
+            e.preventDefault()
+        }
+        function touchend() {
             down = false;
             glat = lat;
             glng = lng;
             upRotX = rotX;
             upRotY = rotY;
-
-        });
-        window.addEventListener('mousemove', function(e) {
-            if (down) {
-                offsetX = e.clientX-seedX;
-                offsetY = e.clientY-seedY;
-                step();
-            };
-        });
-
-        
-    
+            e.preventDefault()
+        }
+        window.addEventListener('touchstart', touchstart);
+        window.addEventListener('mousedown', touchstart);
+        window.addEventListener('touchmove', touchmove);
+        window.addEventListener('mousemove', touchmove);
+        window.addEventListener('touchend', touchend);
+        window.addEventListener('mouseup', touchend);
     </script>
 </html>
