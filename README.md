@@ -4,7 +4,7 @@ Visualize the nearest 10 airports on a globe.
 
 https://tidwall.com/airports
 
-<img src="airports.gif" width="320" height="320">
+<img src="airports.gif" width="320">
 
 Reads [28K+ airports](airports.js) in real-time from a [QuadTree](qtree.js) index using a [geodesic](geo.js) optimized kNN operation.
 
