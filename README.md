@@ -2,7 +2,7 @@
 
 Visualize the nearest 10 airports on a globe.
 
-[See it here](https://tidwall.com/airports)
+https://tidwall.com/airports
 
 <img src="airports.gif" width="320" height="320">
 
